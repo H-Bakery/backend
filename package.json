@@ -4,7 +4,7 @@
   "description": "",
   "keywords": [],
   "scripts": {
-    "start": "node src/server.ts",
+    "start": "node ./dist/server.js",
     "build": "tsc",
     "dev": "tsc-watch --esModuleInterop src/server.ts --outDir ./dist --onSuccess 'node ./dist/server.js'",
     "migrate:up": "db-migrate --env dev up",
@@ -17,7 +17,7 @@
   },
   "author": "Al Diaz",
   "license": "ISC",
-  "main": "server.ts",
+  "main": "node ./dist/server.js",
   "dependencies": {
     "bcrypt": "^5.0.1",
     "db-migrate": "^0.11.12",
