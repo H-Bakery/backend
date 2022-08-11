@@ -13,12 +13,23 @@ const {
   ENV
 } = process.env;
 
-const client = new Pool({
-  host: POSTGRES_HOST,
-  port: parseInt(POSTGRES_PORT as string),
-  database: ENV === 'dev' ? POSTGRES_DB : POSTGRES_TEST_DB,
-  user: POSTGRES_USER,
-  password: POSTGRES_PASSWORD
-});
+let client;
+
+if (ENV === 'dev') {
+  client = new Pool({
+    host: POSTGRES_HOST,
+    port: parseInt(POSTGRES_PORT as string),
+    database: ENV === 'dev' ? POSTGRES_DB : POSTGRES_TEST_DB,
+    user: POSTGRES_USER,
+    password: POSTGRES_PASSWORD
+  });
+} else {
+  client = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
+}
 
 export default client;
