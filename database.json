@@ -14,5 +14,6 @@
     "user": "your-username",
     "password": "",
     "port": 5432
-  }
+  },
+  "heroku": {"ENV": "DATABASE_URL"}
 }
