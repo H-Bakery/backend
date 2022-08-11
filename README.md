@@ -1,4 +1,4 @@
-# Bakery Bacekend
+# Bakery Backend
 
 
 ### Commands
