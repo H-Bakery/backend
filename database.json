@@ -18,5 +18,6 @@
   "prod": {
     "driver": "pg",
     "native": "true"
-  }
+  },
+  "other": {"ENV": "DATABASE_URL"}
 }
