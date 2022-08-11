@@ -15,5 +15,12 @@
     "password": "",
     "port": 5432
   },
-  "other": {"ENV": "DATABASE_URL"}
+  "prod": {
+    "driver": "pg",
+    "user": {"ENV": "POSTGRES_USER"},
+    "password": {"ENV": "POSTGRES_PASSWORD"},
+    "database": {"ENV": "POSTGRES_DB"},
+    "host": {"ENV": "POSTGRES_HOST"},
+    "port": 5432
+  }
 }
