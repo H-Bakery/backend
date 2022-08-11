@@ -64,7 +64,7 @@ const addProduct = async (req: Request, res: Response): Promise<void> => {
       user_id
     });
     res.json(addedProduct);
-  } catch (err) {
+  } catch (err: any) {
     res.status(400).json({ message: err.message });
   }
 };
