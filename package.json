@@ -7,7 +7,7 @@
     "start": "node ./dist/server.js",
     "build": "tsc",
     "dev": "tsc-watch --esModuleInterop src/server.ts --outDir ./dist --onSuccess 'node ./dist/server.js'",
-    "migrate:prod:up": "db-migrate --env prod up",
+    "migrate:prod:up": "NODE_TLS_REJECT_UNAUTHORIZED='0' db-migrate --env prod up",
     "migrate:up": "db-migrate --env dev up",
     "migrate:reset": "db-migrate --env dev reset",
     "migrate:down": "db-migrate --env dev down",
