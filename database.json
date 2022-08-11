@@ -17,7 +17,10 @@
   },
   "prod": {
     "driver": "pg",
-    "native": "true"
-  },
-  "other": {"ENV": "DATABASE_URL"}
+    "user": {"ENV": "POSTGRES_USER"},
+    "password": {"ENV": "POSTGRES_PASSWORD"},
+    "database": {"ENV": "POSTGRES_DB"},
+    "host": {"ENV": "POSTGRES_HOST"},
+    "ssl": true
+  }
 }
