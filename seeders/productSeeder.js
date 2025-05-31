@@ -1,5 +1,7 @@
+const path = require('path');
 const models = require("../models");
 const logger = require("../utils/logger");
+const { parseCSV } = require("../utils/csvParser");
 
 module.exports = {
   seed: async () => {
@@ -13,19 +15,35 @@ module.exports = {
       const productCount = await models.Product.count();
 
       if (productCount === 0) {
-        await models.Product.bulkCreate([
-          { name: "White Bread", price: 3.99, stock: 5, dailyTarget: 20 },
-          { name: "Croissant", price: 2.5, stock: 8, dailyTarget: 30 },
-          { name: "Chocolate Muffin", price: 3.25, stock: 3, dailyTarget: 15 },
-          { name: "Sourdough Bread", price: 4.99, stock: 2, dailyTarget: 10 },
-          { name: "Baguette", price: 2.99, stock: 6, dailyTarget: 25 },
-        ]);
-        logger.info("Product seed data created successfully");
+        // Path to CSV file relative to this file
+        const csvFilePath = path.resolve(__dirname, '../../content/products/products.csv');
+        
+        // Parse CSV data
+        const productsData = parseCSV(csvFilePath);
+        
+        // Transform CSV data to match our model structure
+        const productsToCreate = productsData.map(product => ({
+          id: parseInt(product.id),
+          name: product.name,
+          price: parseFloat(product.price),
+          description: `Category: ${product.category}`,
+          // Set default values for fields not in CSV
+          stock: 10,
+          dailyTarget: 20,
+          isActive: true,
+          // Store image path from CSV
+          image: product.image
+        }));
+        
+        // Create products in database
+        await models.Product.bulkCreate(productsToCreate);
+        logger.info(`Created ${productsToCreate.length} products from CSV data`);
       } else {
         logger.info("Products already exist, skipping seed");
       }
     } catch (error) {
       logger.error("Error seeding products:", error);
+      logger.error(error.stack);
     }
   },
 };

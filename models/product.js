@@ -28,6 +28,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    image: {
+      type: DataTypes.STRING,
+    },
+    category: {
+      type: DataTypes.STRING,
+    },
   });
 
   return Product;

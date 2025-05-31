@@ -2,6 +2,74 @@
 Excluded: node_modules, out, .next directories and .db files
 ===============================
 
+FILE: ./README-CSV-IMPORT.md
+----------------------------------------
+# CSV Product Import
+
+## Overview
+The bakery backend now includes functionality to import product data from a CSV file located in the `content/products/products.csv` path. This feature automatically populates the database with product information during application startup if no products exist in the database.
+
+## Implementation Details
+
+### Key Files Added/Modified
+
+1. **New Utility File**: `utils/csvParser.js`
+   - Provides CSV parsing functionality
+   - Handles quoted CSV values properly
+   - Returns array of JSON objects from CSV data
+
+2. **Updated Product Model**: `models/product.js`
+   - Added `image` field to store product image paths
+   - Added `category` field to store product category
+
+3. **Updated Product Seeder**: `seeders/productSeeder.js`
+   - Now reads data from CSV file instead of hardcoded values
+   - Maps CSV fields to database model fields
+   - Sets default values for fields not present in CSV (stock, dailyTarget)
+
+4. **Updated Product Controller**: `controllers/productController.js`
+   - Modified to include new fields in API responses
+
+## CSV File Format
+
+The expected format for `products.csv` is:
+```
+id,name,category,image,price
+1,"Product Name",Category,"/path/to/image.jpg",2.50
+```
+
+## Running the Import
+
+The product import happens automatically when the application starts if the product table is empty. The import process follows these steps:
+
+1. Application starts and connects to the database
+2. Database tables are synced
+3. Product seeder checks if products exist in the database
+4. If no products exist, the seeder reads and parses the CSV file
+5. CSV data is transformed to match the database schema
+6. Products are created in the database via `bulkCreate`
+
+## Testing CSV Parsing
+
+A test script has been added to verify the CSV parsing functionality:
+
+```bash
+npm run test:csv
+```
+
+This script:
+- Reads the CSV file
+- Parses it into JSON objects
+- Displays the first 3 products for verification
+- Shows how the data is transformed for database insertion
+
+## Troubleshooting
+
+- If products aren't being imported, check that the CSV file exists at `content/products/products.csv`
+- Verify CSV format matches the expected structure
+- Check logs for any parsing errors
+- Make sure the database connection is working properly----------------------------------------
+
 FILE: ./README.md
 ----------------------------------------
 # Bakery Backend
@@ -42,8 +110,56 @@ bakery backend/
 
 FILE: ./ai.md
 ----------------------------------------
-[Binary file - content not displayed]
-----------------------------------------
+# Bakery Backend Overview
+
+This directory contains the Node.js backend for the bakery management system. It's built using Express, Sequelize ORM with a SQLite database.
+
+## Project Structure
+
+- `config/` - Database configuration 
+- `controllers/` - Request handlers and business logic
+- `middleware/` - Express middleware (auth, logging)
+- `models/` - Sequelize data models
+- `routes/` - API route definitions
+- `seeders/` - Database seed data
+- `utils/` - Utility functions and helpers
+
+## Key Features
+
+- REST API for product management
+- CSV product import from content/products directory
+- User authentication and authorization
+- Cash management system
+- Chat functionality
+
+## Recent Updates
+
+The backend now supports importing product data from CSV files:
+- Added CSV parser utility in `utils/csvParser.js`
+- Updated product model to include image and category fields
+- Modified product seeder to read from CSV instead of hardcoded values
+- Added test script for CSV parsing in `test-csv.js`
+
+## API Endpoints
+
+- Authentication: `/login`, `/register` 
+- Products: `/products`, `/products/:id`
+- Orders: `/orders`
+- Baking List: `/baking-list`
+- Cash: `/cash`
+- Chat: `/chat`
+
+## Code Style
+
+- No semicolons
+- MVC architecture
+- Async/await pattern for asynchronous operations
+- Proper error handling
+- Sequelize for database operations
+
+## Getting Started
+
+Run `npm install` to install dependencies and `npm start` to start the server. The server will run on port 5000 by default.----------------------------------------
 
 FILE: ./bakery/processes/croissant_production.yaml
 ----------------------------------------
@@ -93,6 +209,97 @@ steps:
     params:
       temp: 190°C
     notes: "Vorher mit Ei bestreichen"
+----------------------------------------
+
+FILE: ./bakery/processes/filling_production.yaml
+----------------------------------------
+# Fillings Production Workflow
+name: filling_production
+version: 1.0
+fillings:
+  - name: nuss_fuellung
+    ingredients:
+      - 2kg Haselnüsse (gemahlen)
+      - 1kg Zucker
+      - 500g Butter
+      - 4 Eier
+      - 200ml Rum (optional)
+    yield: 3.5kg
+    preparation_time: 25m
+
+  - name: schoko_fuellung
+    ingredients:
+      - 1.5kg Schokolade (Zartbitter)
+      - 500g Butter
+      - 500g Zucker
+      - 200g Kakaopulver
+    yield: 2.7kg
+    preparation_time: 20m
+
+  - name: pudding_fuellung
+    ingredients:
+      - 2L Milch
+      - 8 Päckchen Vanillepuddingpulver
+      - 500g Zucker
+      - 4 Eigelb
+    yield: 2.5kg
+    preparation_time: 30m
+
+  - name: marzipan_fuellung
+    ingredients:
+      - 2kg Marzipanrohmasse
+      - 500g Puderzucker
+      - 200g Butter
+      - 100ml Amaretto (optional)
+    yield: 2.7kg
+    preparation_time: 15m
+----------------------------------------
+
+FILE: ./bakery/processes/hefeteig_production.yaml
+----------------------------------------
+# Hefeteig Base Production Workflow
+name: hefeteig_production
+version: 1.0
+steps:
+  - name: zutaten_vorbereiten
+    timeout: 15m
+    activities:
+      - mehl_abwiegen
+      - zucker_abwiegen
+      - butter_vorbereiten
+      - hefe_aktivieren
+    notes: "Milch auf 30-35°C erwärmen für die Hefeaktivierung"
+
+  - name: teig_herstellen
+    timeout: 30m
+    activities:
+      - mixen
+      - kneten
+    params:
+      knetzeit: "12m bei mittlerer Stufe"
+    notes: "Teig sollte glatt und elastisch sein"
+
+  - name: erste_gehzeit
+    type: sleep
+    duration: 45m
+    conditions:
+      - temp > 25°C: 30m
+      - temp < 20°C: 60m
+    notes: "Abgedeckt an einem warmen Ort gehen lassen"
+
+  - name: teig_portionieren
+    timeout: 25m
+    activities:
+      - teig_abwiegen
+      - teig_formen
+    params:
+      einheit_groesse: 300g
+    notes: "Gleichmäßige Portionen für konsistente Backwaren"
+
+  - name: zweite_gehzeit
+    type: sleep
+    duration: 20m
+    notes: "Kurze Gehzeit vor der Weiterverarbeitung"
 ----------------------------------------
 
 FILE: ./bakery/processes/sourdough_bread.yaml
@@ -187,6 +394,74 @@ module.exports = {
   testConnection,
 };
 ----------------------------------------
+
+FILE: ./controllers/ai.md
+----------------------------------------
+# Bakery Backend Controllers Directory
+
+This directory contains the controller logic for the bakery application, following the MVC (Model-View-Controller) architecture pattern. Controllers handle HTTP requests, interact with models, and send back appropriate responses.
+
+## Key Controllers
+
+- `productController.js` - Handles product-related operations (list, view, create, update, delete)
+- `authController.js` - Manages user authentication (register, login)
+- `cashController.js` - Manages cash entries and financial transactions
+- `chatController.js` - Handles chat message operations
+- `orderController.js` - Manages customer orders
+
+## Product Controller
+
+The `productController.js` contains:
+
+- `getProducts` - Retrieves all active products with fields like id, name, price, stock, description, image, and category
+- `getProduct` - Retrieves a specific product by ID with all its details
+
+This controller was recently updated to include new fields (image, category) in the API response after the product model was expanded to support CSV data import.
+
+## Controller Structure
+
+Each controller typically follows this pattern:
+- Import required models and utilities
+- Export controller methods as functions
+- Use async/await pattern for database operations
+- Include proper error handling and logging
+- Return appropriate HTTP status codes and response data
+
+## Request Flow
+
+1. Route receives HTTP request
+2. Controller method is called
+3. Controller performs business logic (often involving models)
+4. Controller sends HTTP response with appropriate data
+
+## Code Style
+
+- No semicolons
+- Async/await for asynchronous operations
+- Consistent error handling with logger
+- Clear separation of concerns
+- RESTful API design principles
+
+## Usage Example
+
+```javascript
+// Route definition
+router.get('/products', productController.getProducts);
+
+// Controller implementation
+exports.getProducts = async (req, res) => {
+  try {
+    const products = await models.Product.findAll({
+      where: { isActive: true },
+      attributes: ['id', 'name', 'price', 'stock', 'description', 'image', 'category'],
+    });
+    res.json(products);
+  } catch (error) {
+    logger.error("Error retrieving products:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+};
+```----------------------------------------
 
 FILE: ./controllers/authController.js
 ----------------------------------------
@@ -702,6 +977,7 @@ exports.getProducts = async (req, res) => {
   try {
     const products = await models.Product.findAll({
       where: { isActive: true },
+      attributes: ['id', 'name', 'price', 'stock', 'description', 'image', 'category'],
     });
 
     logger.info(`Retrieved ${products.length} products`);
@@ -716,7 +992,9 @@ exports.getProducts = async (req, res) => {
 exports.getProduct = async (req, res) => {
   logger.info(`Processing get product request for ID: ${req.params.id}`);
   try {
-    const product = await models.Product.findByPk(req.params.id);
+    const product = await models.Product.findByPk(req.params.id, {
+      attributes: ['id', 'name', 'price', 'stock', 'description', 'image', 'category', 'dailyTarget', 'isActive'],
+    });
 
     if (!product) {
       logger.warn(`Product not found: ${req.params.id}`);
@@ -994,6 +1272,67 @@ module.exports = (sequelize) => {
 };
 ----------------------------------------
 
+FILE: ./models/ai.md
+----------------------------------------
+# Bakery Backend Models Directory
+
+This directory contains the Sequelize ORM models that define the database schema for the bakery application.
+
+## Key Models
+
+- `Product.js` - Product model representing bakery items
+- `User.js` - User model for authentication and authorization
+- `Cash.js` - Cash entries model for tracking financial transactions
+- `Chat.js` - Chat messages model
+- `Order.js` - Order model for tracking customer orders
+- `OrderItem.js` - Order items model for individual items in an order
+
+## Model Structure
+
+The directory follows Sequelize's standard model definition pattern:
+
+- Each model file exports a function that takes `sequelize` and `DataTypes` parameters
+- Models define fields, validations, and associations
+- The `index.js` file sets up associations between models
+
+## Product Model
+
+The `Product` model includes fields like:
+- `id` - Primary key
+- `name` - Product name
+- `price` - Product price
+- `stock` - Current inventory level
+- `dailyTarget` - Daily production target
+- `description` - Product description
+- `isActive` - Whether the product is available
+- `image` - Path to product image
+- `category` - Product category
+
+This model was recently updated to support CSV data import with new fields for images and categories.
+
+## Database Relationships
+
+- Users have many Cash entries
+- Users have many Chat messages
+- Orders have many OrderItems
+- Products can be part of multiple OrderItems
+
+## Code Style
+
+- No semicolons
+- Clear field definitions with proper types
+- Default values provided where appropriate
+- Associations defined in the `index.js` file
+
+## Usage Example
+
+```javascript
+const product = await models.Product.findByPk(1);
+const allActiveProducts = await models.Product.findAll({
+  where: { isActive: true }
+});
+```----------------------------------------
+
 FILE: ./models/index.js
 ----------------------------------------
 const { sequelize } = require("../config/database");
@@ -1180,6 +1519,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    image: {
+      type: DataTypes.STRING,
+    },
+    category: {
+      type: DataTypes.STRING,
+    },
   });
 
   return Product;
@@ -1218,6 +1563,50 @@ const bakingListController = require("../controllers/bakingListController");
 
 // Baking list route
 router.get("/", bakingListController.getBakingList);
+
+// Get Hefezopf orders
+router.get("/production/hefezopf-orders", async (req, res) => {
+  try {
+    const { date } = req.query;
+
+    // In a real implementation, query your database for orders
+    // For now, return mock data
+    const mockOrders = {
+      "Hefezopf Plain": 15,
+      "Hefekranz Nuss": 8,
+      "Hefekranz Schoko": 12,
+      "Hefekranz Pudding": 5,
+      "Hefekranz Marzipan": 4,
+      "Mini Hefezopf": 20,
+      "Hefeschnecken Nuss": 30,
+      "Hefeschnecken Schoko": 25,
+    };
+
+    res.json(mockOrders);
+  } catch (error) {
+    console.error("Error fetching hefezopf orders:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Save production plan
+router.post("/production/plans", async (req, res) => {
+  try {
+    const { date, plan } = req.body;
+
+    // In a real implementation, save to your database
+    // For now, just acknowledge receipt
+
+    res.json({
+      success: true,
+      message: "Production plan saved successfully",
+      id: `plan-${Date.now()}`,
+    });
+  } catch (error) {
+    console.error("Error saving production plan:", error);
+    res.status(500).json({ error: "Failed to save production plan" });
+  }
+});
 
 module.exports = router;
 ----------------------------------------
@@ -1280,10 +1669,59 @@ router.get("/:id", productController.getProduct);
 module.exports = router;
 ----------------------------------------
 
+FILE: ./seeders/ai.md
+----------------------------------------
+# Bakery Backend Seeders Directory
+
+This directory contains database seeders for the bakery application. Seeders are responsible for populating the database with initial data when the application first starts or when the database is reset.
+
+## Key Seeders
+
+- `productSeeder.js` - Populates the Products table with data from `content/products/products.csv`
+
+## Product Seeder
+
+The Product Seeder has been recently updated to:
+
+1. Read product data from a CSV file located at `content/products/products.csv`
+2. Parse the CSV data using the new `csvParser.js` utility in the utils directory
+3. Transform the data to match the Product model structure
+4. Insert the processed data into the database using Sequelize's bulkCreate
+
+## How Seeders Work
+
+Seeders are executed during application startup in `index.js`. They check if data already exists in the table, and only populate it if the table is empty. This prevents duplicate data when restarting the application.
+
+## CSV Data Structure
+
+The product CSV file contains the following fields:
+- `id` - Product identifier
+- `name` - Product name
+- `category` - Product category (e.g., Brot, Brötchen, Kuchen)
+- `image` - Path to the product image file
+- `price` - Product price in EUR
+
+## Usage
+
+Seeders are automatically run when the application starts. To manually trigger a seeder:
+
+```javascript
+const productSeeder = require('./seeders/productSeeder');
+await productSeeder.seed();
+```
+
+## Related Files
+
+- `utils/csvParser.js` - Parses the CSV product data
+- `models/Product.js` - The database model the seeder populates
+- `test-csv.js` - Test script for verifying CSV parsing functionality----------------------------------------
+
 FILE: ./seeders/productSeeder.js
 ----------------------------------------
+const path = require('path');
 const models = require("../models");
 const logger = require("../utils/logger");
+const { parseCSV } = require("../utils/csvParser");
 
 module.exports = {
   seed: async () => {
@@ -1297,23 +1735,219 @@ module.exports = {
       const productCount = await models.Product.count();
 
       if (productCount === 0) {
-        await models.Product.bulkCreate([
-          { name: "White Bread", price: 3.99, stock: 5, dailyTarget: 20 },
-          { name: "Croissant", price: 2.5, stock: 8, dailyTarget: 30 },
-          { name: "Chocolate Muffin", price: 3.25, stock: 3, dailyTarget: 15 },
-          { name: "Sourdough Bread", price: 4.99, stock: 2, dailyTarget: 10 },
-          { name: "Baguette", price: 2.99, stock: 6, dailyTarget: 25 },
-        ]);
-        logger.info("Product seed data created successfully");
+        // Path to CSV file relative to this file
+        const csvFilePath = path.resolve(__dirname, '../../content/products/products.csv');
+        
+        // Parse CSV data
+        const productsData = parseCSV(csvFilePath);
+        
+        // Transform CSV data to match our model structure
+        const productsToCreate = productsData.map(product => ({
+          id: parseInt(product.id),
+          name: product.name,
+          price: parseFloat(product.price),
+          description: `Category: ${product.category}`,
+          // Set default values for fields not in CSV
+          stock: 10,
+          dailyTarget: 20,
+          isActive: true,
+          // Store image path from CSV
+          image: product.image
+        }));
+        
+        // Create products in database
+        await models.Product.bulkCreate(productsToCreate);
+        logger.info(`Created ${productsToCreate.length} products from CSV data`);
       } else {
         logger.info("Products already exist, skipping seed");
       }
     } catch (error) {
       logger.error("Error seeding products:", error);
+      logger.error(error.stack);
     }
   },
 };
 ----------------------------------------
+
+FILE: ./test-csv.js
+----------------------------------------
+const path = require("path");
+const { parseCSV } = require("./utils/csvParser");
+const logger = require("./utils/logger");
+
+async function main() {
+  try {
+    // Path to CSV file
+    const csvFilePath = path.resolve(
+      __dirname,
+      "../content/products/products.csv",
+    );
+
+    // Parse CSV data
+    const productsData = parseCSV(csvFilePath);
+
+    // Log results
+    logger.info(`Successfully parsed ${productsData.length} products from CSV`);
+    logger.info("First 3 products:");
+
+    // Log first 3 products for verification
+    productsData.slice(0, 3).forEach((product, index) => {
+      logger.info(`Product ${index + 1}:`, product.name);
+    });
+
+    // Transform CSV data to match our model structure (as in seeder)
+    const transformedProducts = productsData.slice(0, 3).map((product) => ({
+      id: parseInt(product.id),
+      name: product.name,
+      price: parseFloat(product.price),
+      description: `Category: ${product.category}`,
+      stock: 10,
+      dailyTarget: 20,
+      isActive: true,
+      image: product.image,
+      category: product.category,
+    }));
+
+    // Log transformed data
+    logger.info("Transformed products:");
+    transformedProducts.forEach((product, index) => {
+      logger.info(
+        `Transformed Product ${index + 1}:`,
+        JSON.stringify(product, null, 2),
+      );
+    });
+  } catch (error) {
+    logger.error("Error testing CSV parser:", error);
+  }
+}
+
+main();
+----------------------------------------
+
+FILE: ./utils/ai.md
+----------------------------------------
+# Bakery Backend Utils Directory
+
+This directory contains utility functions and helpers used throughout the backend application.
+
+## Files in this Directory
+
+- `logger.js` - Logging utility for consistent log formatting across the application
+- `csvParser.js` - CSV parsing utility for importing product data from CSV files
+
+## CSV Parser
+
+The `csvParser.js` file provides functionality to:
+- Read CSV files from the filesystem
+- Parse CSV data into JavaScript objects
+- Handle quoted fields and special characters properly
+- Map CSV headers to object properties
+
+This utility is primarily used by the product seeder to import product data from the CSV file located at `content/products/products.csv`.
+
+## Logger
+
+The `logger.js` file provides:
+- Consistent log formatting
+- Different log levels (info, error, warn, debug)
+- Database query logging functionality
+
+## Usage Example
+
+```javascript
+const { parseCSV } = require('./utils/csvParser');
+const logger = require('./utils/logger');
+
+// Parse CSV file
+const products = parseCSV('path/to/file.csv');
+
+// Log results
+logger.info(`Successfully parsed ${products.length} products`);
+```
+
+## Code Style
+
+- No semicolons
+- Functional programming approach
+- Thorough error handling
+- Clear documentation----------------------------------------
+
+FILE: ./utils/csvParser.js
+----------------------------------------
+const fs = require('fs');
+const path = require('path');
+const logger = require('./logger');
+
+/**
+ * Parses a CSV file and returns an array of objects
+ * @param {string} filePath - Path to the CSV file
+ * @returns {Array} - Array of objects where each object represents a row in the CSV
+ */
+function parseCSV(filePath) {
+  try {
+    // Read file
+    const data = fs.readFileSync(filePath, 'utf8');
+    
+    // Split the content by new line
+    const lines = data.split('\n');
+    
+    // Extract headers
+    const headers = lines[0].split(',').map(header => {
+      // Remove quotes if they exist
+      return header.replace(/^"/, '').replace(/"$/, '').trim();
+    });
+    
+    // Parse data rows
+    const result = [];
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue; // Skip empty lines
+      
+      const values = [];
+      let insideQuotes = false;
+      let currentValue = '';
+      
+      // Parse CSV line character by character to handle quoted fields properly
+      for (let j = 0; j < lines[i].length; j++) {
+        const char = lines[i][j];
+        
+        if (char === '"') {
+          insideQuotes = !insideQuotes;
+        } else if (char === ',' && !insideQuotes) {
+          values.push(currentValue);
+          currentValue = '';
+        } else {
+          currentValue += char;
+        }
+      }
+      
+      // Add the last value
+      values.push(currentValue);
+      
+      // Create object from headers and values
+      const obj = {};
+      for (let j = 0; j < headers.length; j++) {
+        // Remove quotes if they exist
+        if (values[j]) {
+          obj[headers[j]] = values[j].replace(/^"/, '').replace(/"$/, '').trim();
+        } else {
+          obj[headers[j]] = '';
+        }
+      }
+      
+      result.push(obj);
+    }
+    
+    logger.info(`Successfully parsed CSV file: ${filePath}, found ${result.length} entries`);
+    return result;
+  } catch (error) {
+    logger.error(`Error parsing CSV file: ${filePath}`, error);
+    throw error;
+  }
+}
+
+module.exports = {
+  parseCSV
+};----------------------------------------
 
 FILE: ./utils/logger.js
 ----------------------------------------

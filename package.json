@@ -8,7 +8,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:csv": "node test-csv.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -18,6 +19,7 @@
     "jsonwebtoken": "^9.0.2",
     "sequelize": "^6.37.7",
     "sequelize-cli": "^6.6.2",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "csv-parser": "^3.0.0"
   }
 }

@@ -7,6 +7,7 @@ exports.getProducts = async (req, res) => {
   try {
     const products = await models.Product.findAll({
       where: { isActive: true },
+      attributes: ['id', 'name', 'price', 'stock', 'description', 'image', 'category'],
     });
 
     logger.info(`Retrieved ${products.length} products`);
@@ -21,7 +22,9 @@ exports.getProducts = async (req, res) => {
 exports.getProduct = async (req, res) => {
   logger.info(`Processing get product request for ID: ${req.params.id}`);
   try {
-    const product = await models.Product.findByPk(req.params.id);
+    const product = await models.Product.findByPk(req.params.id, {
+      attributes: ['id', 'name', 'price', 'stock', 'description', 'image', 'category', 'dailyTarget', 'isActive'],
+    });
 
     if (!product) {
       logger.warn(`Product not found: ${req.params.id}`);
