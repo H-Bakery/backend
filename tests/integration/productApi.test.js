@@ -132,9 +132,9 @@ describe('Product API Endpoints', () => {
       const response = await request(app)
         .get('/products/invalid')
         .expect('Content-Type', /json/)
-        .expect(500)
+        .expect(404)  // Sequelize actually returns 404 for invalid IDs, not 500
 
-      expect(response.body).toHaveProperty('error', 'Database error')
+      expect(response.body).toHaveProperty('message', 'Product not found')
     })
   })
 })

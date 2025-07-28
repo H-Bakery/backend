@@ -17,16 +17,23 @@ tests/
 
 ### Unit Tests
 
+- **authController.test.js** - Tests authentication controller (registration, login, JWT)
+- **authMiddleware.test.js** - Tests JWT authentication middleware
 - **csvParser.test.js** - Tests the CSV parsing utility
 - **productController.test.js** - Tests the product controller logic
 - **productModel.test.js** - Tests the product database model
 - **productSeeder.test.js** - Tests the product seeder that imports CSV data
+- **cashController.test.js** - Tests cash management controller
+- **cashControllerCRUD.test.js** - Tests cash CRUD operations
+- **unsoldProductController.test.js** - Tests unsold product tracking
 - **sanity.test.js** - Basic sanity checks for the testing environment
 
 ### Integration Tests
 
+- **authAPI.test.js** - Tests authentication API endpoints with real HTTP requests
 - **csvImport.test.js** - Tests the end-to-end CSV import process
 - **productApi.test.js** - Tests the product REST API endpoints
+- **cashAPI.test.js** - Tests cash management API endpoints
 
 ## Running Tests
 
@@ -65,6 +72,33 @@ npm run test:file tests/unit/csvParser.test.js
 For CSV parsing tests, run:
 ```bash
 npm run test:csv
+```
+
+## Authentication Test Suite
+
+The authentication tests provide comprehensive coverage of the security system:
+
+### Security Test Coverage
+- **Password Security**: Bcrypt hashing, salt rounds, password validation
+- **JWT Tokens**: Token generation, signature verification, expiration handling
+- **Input Validation**: SQL injection prevention, XSS protection, malformed data handling
+- **Authorization**: Bearer token parsing, header validation, user ID extraction
+- **Error Handling**: Database errors, authentication failures, edge cases
+
+### Test Files
+- `unit/authController.test.js` - 20 tests covering registration, login, and security
+- `unit/authMiddleware.test.js` - 20 tests covering JWT middleware and validation
+- `integration/authAPI.test.js` - 19+ tests covering HTTP endpoints and security vulnerabilities
+
+### Running Auth Tests
+```bash
+# Run all auth tests
+npm test -- --testPathPattern=auth
+
+# Run specific auth test files
+npm test -- tests/unit/authController.test.js
+npm test -- tests/unit/authMiddleware.test.js
+npm test -- tests/integration/authAPI.test.js
 ```
 
 ## Writing New Tests

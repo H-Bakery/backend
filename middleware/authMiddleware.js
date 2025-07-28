@@ -4,17 +4,27 @@ const SECRET_KEY = "your_secret_key";
 
 const authenticate = (req, res, next) => {
   logger.info("Authenticating request...");
-  const token = req.headers["authorization"];
+  const authHeader = req.headers["authorization"];
+
+  if (!authHeader) {
+    logger.info("Authentication failed: No authorization header provided");
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  // Extract token from "Bearer <token>" format
+  const token = authHeader.startsWith("Bearer ") 
+    ? authHeader.substring(7) 
+    : authHeader;
 
   if (!token) {
     logger.info("Authentication failed: No token provided");
-    return res.status(403).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   jwt.verify(token, SECRET_KEY, (err, decoded) => {
     if (err) {
       logger.error("Authentication failed: Invalid token", err);
-      return res.status(403).json({ error: "Invalid token" });
+      return res.status(401).json({ error: "Invalid token" });
     }
 
     req.userId = decoded.id;

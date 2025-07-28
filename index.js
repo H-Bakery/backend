@@ -10,10 +10,12 @@ const loggerMiddleware = require("./middleware/loggerMiddleware");
 const authRoutes = require("./routes/authRoutes");
 const cashRoutes = require("./routes/cashRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 const orderRoutes = require("./routes/orderRoutes");
 const bakingListRoutes = require("./routes/bakingListRoutes");
 const productRoutes = require("./routes/productRoutes");
+const unsoldProductRoutes = require("./routes/unsoldProductRoutes");
 
 const app = express();
 const PORT = 5000;
@@ -34,6 +36,14 @@ logger.info("Initializing application...");
 testConnection().then(async (connected) => {
   if (connected) {
     await syncDatabase();
+    
+    // Seed users first
+    const userSeeder = require("./seeders/userSeeder");
+    await userSeeder
+      .seed()
+      .catch((err) => logger.error("Error in user seeder:", err));
+    
+    // Then seed products
     const productSeeder = require("./seeders/productSeeder");
     await productSeeder
       .seed()
@@ -48,11 +58,13 @@ testConnection().then(async (connected) => {
 app.use("/", authRoutes);
 app.use("/cash", cashRoutes);
 app.use("/chat", chatRoutes);
+app.use("/dashboard", dashboardRoutes);
 
 // Admin routes
 app.use("/orders", orderRoutes);
 app.use("/baking-list", bakingListRoutes);
 app.use("/products", productRoutes);
+app.use("/unsold-products", unsoldProductRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -68,6 +80,14 @@ app.listen(PORT, () => {
   logger.info("  POST /login - Login a user");
   logger.info("  POST /cash - Add a cash entry (authenticated)");
   logger.info("  GET /cash - Get cash entries (authenticated)");
+  logger.info("  PUT /cash/:id - Update a cash entry (authenticated)");
+  logger.info("  DELETE /cash/:id - Delete a cash entry (authenticated)");
   logger.info("  GET /chat - Get all chat messages (authenticated)");
   logger.info("  POST /chat - Post a new chat message (authenticated)");
+  logger.info("  GET /dashboard/sales-summary - Get sales analytics (authenticated)");
+  logger.info("  GET /dashboard/production-overview - Get production analytics (authenticated)");
+  logger.info("  GET /dashboard/revenue-analytics - Get revenue analytics (authenticated)");
+  logger.info("  GET /dashboard/order-analytics - Get order analytics (authenticated)");
+  logger.info("  GET /dashboard/product-performance - Get product performance (authenticated)");
+  logger.info("  GET /dashboard/daily-metrics - Get daily metrics (authenticated)");
 });
