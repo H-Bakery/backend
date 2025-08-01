@@ -1,5 +1,6 @@
 const models = require("../models");
 const logger = require("../utils/logger");
+const { createNewOrderNotification } = require("../utils/notificationHelper");
 
 // Get all orders
 exports.getOrders = async (req, res) => {
@@ -90,6 +91,13 @@ exports.createOrder = async (req, res) => {
     });
 
     logger.info(`Order created with ID: ${result.id}`);
+    
+    // Send notification for new order
+    await createNewOrderNotification({
+      id: result.id,
+      customerName: result.customerName,
+      totalAmount: result.totalPrice
+    });
 
     // Fetch the complete order with items to return
     const createdOrder = await models.Order.findByPk(result.id, {
