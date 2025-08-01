@@ -8,8 +8,13 @@ const { SECRET_KEY } = require("../middleware/authMiddleware");
 exports.register = async (req, res) => {
   logger.info("Processing registration request...");
   try {
-    const { username, password } = req.body;
+    const { username, password, email, firstName, lastName, role } = req.body;
     logger.info(`Attempting to register user: ${username}`);
+
+    // Validate required fields
+    if (!username || !password || !email || !firstName || !lastName) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     logger.info("Password hashed successfully");
@@ -17,16 +22,33 @@ exports.register = async (req, res) => {
     const newUser = await User.create({
       username,
       password: hashedPassword,
+      email,
+      firstName,
+      lastName,
+      role: role || 'user' // Default to 'user' if no role specified
     });
 
     logger.info(`User created successfully with ID: ${newUser.id}`);
-    res.json({ message: "User created" });
+    res.json({ 
+      message: "User created",
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        role: newUser.role
+      }
+    });
   } catch (error) {
     logger.error("Registration error:", error);
 
     if (error.name === "SequelizeUniqueConstraintError") {
-      logger.info("Registration failed: Username already exists");
-      return res.status(400).json({ error: "User exists" });
+      logger.info("Registration failed: Username or email already exists");
+      return res.status(400).json({ error: "Username or email already exists" });
+    }
+    if (error.name === "SequelizeValidationError") {
+      return res.status(400).json({ error: error.errors[0].message });
     }
     res.status(500).json({ error: "Server error" });
   }
@@ -55,9 +77,23 @@ exports.login = async (req, res) => {
     }
 
     logger.info(`Password valid, generating token for user ${username}`);
-    const token = jwt.sign({ id: user.id }, SECRET_KEY);
+    
+    // Update last login timestamp
+    await user.update({ lastLogin: new Date() });
+    
+    const token = jwt.sign({ id: user.id, role: user.role }, SECRET_KEY);
     logger.info("Login successful");
-    res.json({ token });
+    res.json({ 
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role
+      }
+    });
   } catch (error) {
     logger.error("Login error:", error);
     res.status(500).json({ error: "Server error" });

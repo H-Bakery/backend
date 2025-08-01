@@ -24,17 +24,32 @@ const seed = async () => {
       {
         id: 1,
         username: "admin",
-        password: hashedPassword
+        password: hashedPassword,
+        email: "admin@bakery.local",
+        firstName: "Admin",
+        lastName: "User",
+        role: "admin",
+        isActive: true
       },
       {
         id: 2, 
         username: "baker",
-        password: hashedPassword
+        password: hashedPassword,
+        email: "baker@bakery.local",
+        firstName: "Bäcker",
+        lastName: "Meister",
+        role: "staff",
+        isActive: true
       },
       {
         id: 3,
         username: "sales",
-        password: hashedPassword
+        password: hashedPassword,
+        email: "sales@bakery.local",
+        firstName: "Verkauf",
+        lastName: "Mitarbeiter",
+        role: "staff",
+        isActive: true
       }
     ];
     

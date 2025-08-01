@@ -10,6 +10,7 @@ const ProductModel = require("./Product");
 const OrderModel = require("./order");
 const OrderItemModel = require("./orderItem");
 const UnsoldProductModel = require("./unsoldProduct");
+const RecipeModel = require("./Recipe");
 
 // Initialize models with DataTypes
 const User = UserModel(sequelize, DataTypes);
@@ -19,6 +20,7 @@ const Product = ProductModel(sequelize, DataTypes);
 const Order = OrderModel(sequelize, DataTypes);
 const OrderItem = OrderItemModel(sequelize, DataTypes);
 const UnsoldProduct = UnsoldProductModel(sequelize, DataTypes);
+const Recipe = RecipeModel(sequelize, DataTypes);
 
 logger.info("Setting up model relationships...");
 
@@ -53,9 +55,10 @@ async function syncDatabase() {
     const productCount = await Product.count();
     const orderCount = await Order.count();
     const unsoldProductCount = await UnsoldProduct.count();
+    const recipeCount = await Recipe.count();
 
     logger.info(
-      `Database contains: ${userCount} users, ${cashCount} cash entries, ${chatCount} chat messages, ${productCount} products, ${orderCount} orders, ${unsoldProductCount} unsold product entries`,
+      `Database contains: ${userCount} users, ${cashCount} cash entries, ${chatCount} chat messages, ${productCount} products, ${orderCount} orders, ${unsoldProductCount} unsold product entries, ${recipeCount} recipes`,
     );
     return true;
   } catch (error) {
@@ -73,5 +76,6 @@ module.exports = {
   Order, // Export the Order model
   OrderItem, // Export the OrderItem model
   UnsoldProduct, // Export the UnsoldProduct model
+  Recipe, // Export the Recipe model
   syncDatabase,
 };
