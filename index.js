@@ -16,6 +16,9 @@ const orderRoutes = require("./routes/orderRoutes");
 const bakingListRoutes = require("./routes/bakingListRoutes");
 const productRoutes = require("./routes/productRoutes");
 const unsoldProductRoutes = require("./routes/unsoldProductRoutes");
+const recipeRoutes = require("./routes/recipeRoutes");
+const staffRoutes = require("./routes/staffRoutes");
+const workflowRoutes = require("./routes/workflowRoutes");
 
 const app = express();
 const PORT = 5000;
@@ -55,7 +58,7 @@ testConnection().then(async (connected) => {
 });
 
 // Register routes
-app.use("/", authRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/cash", cashRoutes);
 app.use("/chat", chatRoutes);
 app.use("/dashboard", dashboardRoutes);
@@ -65,6 +68,9 @@ app.use("/orders", orderRoutes);
 app.use("/baking-list", bakingListRoutes);
 app.use("/products", productRoutes);
 app.use("/unsold-products", unsoldProductRoutes);
+app.use("/api/recipes", recipeRoutes);
+app.use("/api/staff", staffRoutes);
+app.use("/api/workflows", workflowRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -76,8 +82,8 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   logger.info(`Server running on http://localhost:${PORT}`);
   logger.info("Available routes:");
-  logger.info("  POST /register - Register a new user");
-  logger.info("  POST /login - Login a user");
+  logger.info("  POST /api/auth/register - Register a new user");
+  logger.info("  POST /api/auth/login - Login a user");
   logger.info("  POST /cash - Add a cash entry (authenticated)");
   logger.info("  GET /cash - Get cash entries (authenticated)");
   logger.info("  PUT /cash/:id - Update a cash entry (authenticated)");
@@ -90,4 +96,19 @@ app.listen(PORT, () => {
   logger.info("  GET /dashboard/order-analytics - Get order analytics (authenticated)");
   logger.info("  GET /dashboard/product-performance - Get product performance (authenticated)");
   logger.info("  GET /dashboard/daily-metrics - Get daily metrics (authenticated)");
+  logger.info("  GET /api/recipes - Get all recipes");
+  logger.info("  GET /api/recipes/:slug - Get recipe by slug");
+  logger.info("  POST /api/recipes - Create new recipe (authenticated)");
+  logger.info("  PUT /api/recipes/:slug - Update recipe (authenticated)");
+  logger.info("  DELETE /api/recipes/:slug - Delete recipe (authenticated)");
+  logger.info("  GET /api/staff - Get all staff members (admin only)");
+  logger.info("  GET /api/staff/:id - Get staff member by ID (admin only)");
+  logger.info("  POST /api/staff - Create new staff member (admin only)");
+  logger.info("  PUT /api/staff/:id - Update staff member (admin only)");
+  logger.info("  DELETE /api/staff/:id - Delete staff member (admin only)");
+  logger.info("  GET /api/workflows - Get all workflows");
+  logger.info("  GET /api/workflows/:workflowId - Get workflow by ID");
+  logger.info("  GET /api/workflows/categories - Get workflow categories");
+  logger.info("  GET /api/workflows/stats - Get workflow statistics");
+  logger.info("  POST /api/workflows/validate - Validate workflow structure (authenticated)");
 });
