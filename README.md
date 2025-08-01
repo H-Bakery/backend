@@ -1,6 +1,52 @@
 # Bakery Backend
 This repository contains the backend API for a bakery application. It's built using Node.js, Express, and Sequelize ORM with a SQLite database. The backend provides authentication functionality (register/login), cash management for tracking daily revenue, chat system for communication, and product management with CSV data import. The codebase follows a structured MVC (Model-View-Controller) pattern for better organization and maintainability.
 
+## Prerequisites
+
+- Node.js (v14 or higher)
+- npm (v6 or higher)
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd backend
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Set up environment variables:
+```bash
+cp .env.example .env
+```
+
+4. Configure your `.env` file with required values:
+```env
+# JWT Configuration (REQUIRED)
+JWT_SECRET=your-very-secure-jwt-secret-key-change-this-in-production
+
+# Environment
+NODE_ENV=development
+PORT=5000
+```
+
+**Important Security Note**: 
+- The `JWT_SECRET` must be changed to a secure, random string in production
+- Use at least 32 characters for the JWT secret
+- You can generate a secure secret using: `openssl rand -base64 32`
+- Never commit your actual `.env` file to version control
+
+5. Start the server:
+```bash
+npm start
+```
+
+The server will start on `http://localhost:5000`.
+
 ## Architecture
 
 bakery backend/
