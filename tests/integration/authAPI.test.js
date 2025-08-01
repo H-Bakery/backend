@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const authRoutes = require("../../routes/authRoutes");
 const { User } = require("../../models");
 const { setupTestDatabase, cleanupTestDatabase } = require("../helpers/testSetup");
-const { SECRET_KEY } = require("../../middleware/authMiddleware");
+// JWT secret is now in environment variables
 
 // Mock the logger to avoid console output during tests
 jest.mock("../../utils/logger", () => ({
@@ -191,7 +191,7 @@ describe("Auth API Integration Tests", () => {
       expect(typeof response.body.token).toBe("string");
 
       // Verify the token is valid
-      const decoded = jwt.verify(response.body.token, SECRET_KEY);
+      const decoded = jwt.verify(response.body.token, process.env.JWT_SECRET);
       expect(decoded.id).toBeTruthy();
     });
 
@@ -315,8 +315,8 @@ describe("Auth API Integration Tests", () => {
       expect(response1.body.token).not.toBe(response2.body.token);
 
       // Verify tokens decode to different user IDs
-      const decoded1 = jwt.verify(response1.body.token, SECRET_KEY);
-      const decoded2 = jwt.verify(response2.body.token, SECRET_KEY);
+      const decoded1 = jwt.verify(response1.body.token, process.env.JWT_SECRET);
+      const decoded2 = jwt.verify(response2.body.token, process.env.JWT_SECRET);
       expect(decoded1.id).not.toBe(decoded2.id);
     });
   });

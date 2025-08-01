@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { authenticate, SECRET_KEY } = require("../../middleware/authMiddleware");
+const { authenticate } = require("../../middleware/authMiddleware");
 
 // Mock the logger to avoid console output during tests
 jest.mock("../../utils/logger", () => ({
@@ -9,6 +9,15 @@ jest.mock("../../utils/logger", () => ({
   debug: jest.fn(),
   request: jest.fn(),
 }));
+
+// Mock the User model
+jest.mock("../../models", () => ({
+  User: {
+    findByPk: jest.fn()
+  }
+}));
+
+const { User } = require("../../models");
 
 describe("Auth Middleware", () => {
   let req, res, next;
@@ -22,29 +31,49 @@ describe("Auth Middleware", () => {
       json: jest.fn().mockReturnThis(),
     };
     next = jest.fn();
+    
+    // Reset all mocks before each test
+    jest.clearAllMocks();
   });
 
   describe("authenticate", () => {
-    it("should authenticate valid Bearer token", () => {
+    it("should authenticate valid Bearer token", async () => {
       const userId = 123;
-      const token = jwt.sign({ id: userId }, SECRET_KEY);
+      const mockUser = { id: userId, role: 'user', isActive: true };
+      User.findByPk.mockResolvedValue(mockUser);
+      
+      const token = jwt.sign({ id: userId }, process.env.JWT_SECRET);
       req.headers.authorization = `Bearer ${token}`;
 
       authenticate(req, res, next);
+      
+      // Wait for async operations
+      await new Promise(resolve => setImmediate(resolve));
 
+      expect(User.findByPk).toHaveBeenCalledWith(userId);
       expect(req.userId).toBe(userId);
+      expect(req.userRole).toBe('user');
+      expect(req.user).toBe(mockUser);
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it("should authenticate valid token without Bearer prefix", () => {
+    it("should authenticate valid token without Bearer prefix", async () => {
       const userId = 456;
-      const token = jwt.sign({ id: userId }, SECRET_KEY);
+      const mockUser = { id: userId, role: 'admin', isActive: true };
+      User.findByPk.mockResolvedValue(mockUser);
+      
+      const token = jwt.sign({ id: userId }, process.env.JWT_SECRET);
       req.headers.authorization = token;
 
       authenticate(req, res, next);
+      
+      // Wait for async operations
+      await new Promise(resolve => setImmediate(resolve));
 
+      expect(User.findByPk).toHaveBeenCalledWith(userId);
       expect(req.userId).toBe(userId);
+      expect(req.userRole).toBe('admin');
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
     });
@@ -95,7 +124,7 @@ describe("Auth Middleware", () => {
       const userId = 789;
       const expiredToken = jwt.sign(
         { id: userId, exp: Math.floor(Date.now() / 1000) - 10 }, // Expired 10 seconds ago
-        SECRET_KEY
+        process.env.JWT_SECRET
       );
       req.headers.authorization = `Bearer ${expiredToken}`;
 
@@ -131,26 +160,38 @@ describe("Auth Middleware", () => {
       expect(req.userId).toBeUndefined();
     });
 
-    it("should handle token with missing payload", () => {
-      const tokenWithoutPayload = jwt.sign({}, SECRET_KEY);
+    it("should handle token with missing payload", async () => {
+      const mockUser = { id: 1, role: 'user', isActive: true };
+      User.findByPk.mockResolvedValue(mockUser);
+      
+      const tokenWithoutPayload = jwt.sign({}, process.env.JWT_SECRET);
       req.headers.authorization = `Bearer ${tokenWithoutPayload}`;
 
       authenticate(req, res, next);
+      
+      // Wait for async operations
+      await new Promise(resolve => setImmediate(resolve));
 
       expect(req.userId).toBeUndefined();
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it("should preserve other request properties", () => {
+    it("should preserve other request properties", async () => {
       const userId = 111;
-      const token = jwt.sign({ id: userId }, SECRET_KEY);
+      const mockUser = { id: userId, role: 'staff', isActive: true };
+      User.findByPk.mockResolvedValue(mockUser);
+      
+      const token = jwt.sign({ id: userId }, process.env.JWT_SECRET);
       req.headers.authorization = `Bearer ${token}`;
       req.body = { test: "data" };
       req.params = { id: "123" };
       req.query = { search: "test" };
 
       authenticate(req, res, next);
+      
+      // Wait for async operations
+      await new Promise(resolve => setImmediate(resolve));
 
       expect(req.userId).toBe(userId);
       expect(req.body).toEqual({ test: "data" });
@@ -161,7 +202,7 @@ describe("Auth Middleware", () => {
 
     it("should handle lowercase bearer (treated as raw token)", () => {
       const userId = 222;
-      const token = jwt.sign({ id: userId }, SECRET_KEY);
+      const token = jwt.sign({ id: userId }, process.env.JWT_SECRET);
       
       // Test lowercase bearer - middleware treats this as raw token since it doesn't match "Bearer "
       req.headers.authorization = `bearer ${token}`;
@@ -173,8 +214,11 @@ describe("Auth Middleware", () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it("should handle token with additional claims", () => {
+    it("should handle token with additional claims", async () => {
       const userId = 333;
+      const mockUser = { id: userId, role: 'admin', isActive: true };
+      User.findByPk.mockResolvedValue(mockUser);
+      
       const tokenWithClaims = jwt.sign(
         { 
           id: userId, 
@@ -183,35 +227,106 @@ describe("Auth Middleware", () => {
           iat: Math.floor(Date.now() / 1000),
           exp: Math.floor(Date.now() / 1000) + (60 * 60) // 1 hour from now
         }, 
-        SECRET_KEY
+        process.env.JWT_SECRET
       );
       req.headers.authorization = `Bearer ${tokenWithClaims}`;
 
       authenticate(req, res, next);
+      
+      // Wait for async operations
+      await new Promise(resolve => setImmediate(resolve));
 
       expect(req.userId).toBe(userId);
+      expect(req.userRole).toBe('admin');
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it("should work with numeric user IDs", () => {
+    it("should work with numeric user IDs", async () => {
       const userId = 12345;
-      const token = jwt.sign({ id: userId }, SECRET_KEY);
+      const mockUser = { id: userId, role: 'user', isActive: true };
+      User.findByPk.mockResolvedValue(mockUser);
+      
+      const token = jwt.sign({ id: userId }, process.env.JWT_SECRET);
       req.headers.authorization = `Bearer ${token}`;
 
       authenticate(req, res, next);
+      
+      // Wait for async operations
+      await new Promise(resolve => setImmediate(resolve));
 
       expect(req.userId).toBe(userId);
       expect(typeof req.userId).toBe("number");
       expect(next).toHaveBeenCalled();
     });
 
-    it("should work with string user IDs", () => {
-      const userId = "string-user-id";
-      const token = jwt.sign({ id: userId }, SECRET_KEY);
+    it("should reject token when user not found", async () => {
+      const userId = 999;
+      User.findByPk.mockResolvedValue(null);
+      
+      const token = jwt.sign({ id: userId }, process.env.JWT_SECRET);
       req.headers.authorization = `Bearer ${token}`;
 
       authenticate(req, res, next);
+      
+      // Wait for async operations
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(User.findByPk).toHaveBeenCalledWith(userId);
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({ error: "Unauthorized" });
+      expect(next).not.toHaveBeenCalled();
+    });
+    
+    it("should reject token when user is inactive", async () => {
+      const userId = 888;
+      const inactiveUser = { id: userId, role: 'user', isActive: false };
+      User.findByPk.mockResolvedValue(inactiveUser);
+      
+      const token = jwt.sign({ id: userId }, process.env.JWT_SECRET);
+      req.headers.authorization = `Bearer ${token}`;
+
+      authenticate(req, res, next);
+      
+      // Wait for async operations
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(User.findByPk).toHaveBeenCalledWith(userId);
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({ error: "Unauthorized" });
+      expect(next).not.toHaveBeenCalled();
+    });
+    
+    it("should handle database errors gracefully", async () => {
+      const userId = 777;
+      User.findByPk.mockRejectedValue(new Error('Database error'));
+      
+      const token = jwt.sign({ id: userId }, process.env.JWT_SECRET);
+      req.headers.authorization = `Bearer ${token}`;
+
+      authenticate(req, res, next);
+      
+      // Wait for async operations
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(User.findByPk).toHaveBeenCalledWith(userId);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: "Server error" });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it("should work with string user IDs", async () => {
+      const userId = "string-user-id";
+      const mockUser = { id: userId, role: 'user', isActive: true };
+      User.findByPk.mockResolvedValue(mockUser);
+      
+      const token = jwt.sign({ id: userId }, process.env.JWT_SECRET);
+      req.headers.authorization = `Bearer ${token}`;
+
+      authenticate(req, res, next);
+      
+      // Wait for async operations
+      await new Promise(resolve => setImmediate(resolve));
 
       expect(req.userId).toBe(userId);
       expect(typeof req.userId).toBe("string");
@@ -220,23 +335,29 @@ describe("Auth Middleware", () => {
   });
 
   describe("JWT Security", () => {
-    it("should verify token signature correctly", () => {
+    it("should verify token signature correctly", async () => {
       const userId = 444;
-      const validToken = jwt.sign({ id: userId }, SECRET_KEY);
+      const mockUser = { id: userId, role: 'user', isActive: true };
+      User.findByPk.mockResolvedValue(mockUser);
+      
+      const validToken = jwt.sign({ id: userId }, process.env.JWT_SECRET);
       
       // Manually verify the token can be decoded
-      const decoded = jwt.verify(validToken, SECRET_KEY);
+      const decoded = jwt.verify(validToken, process.env.JWT_SECRET);
       expect(decoded.id).toBe(userId);
 
       req.headers.authorization = `Bearer ${validToken}`;
       authenticate(req, res, next);
+      
+      // Wait for async operations
+      await new Promise(resolve => setImmediate(resolve));
 
       expect(req.userId).toBe(userId);
       expect(next).toHaveBeenCalled();
     });
 
     it("should reject tokens with modified payload", () => {
-      const originalToken = jwt.sign({ id: 555 }, SECRET_KEY);
+      const originalToken = jwt.sign({ id: 555 }, process.env.JWT_SECRET);
       
       // Manually tamper with the token (this will break the signature)
       const parts = originalToken.split('.');

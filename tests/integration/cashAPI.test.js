@@ -53,8 +53,7 @@ describe('Cash API Integration Tests', () => {
     
     // Since the login response doesn't include userId, we need to get it from the token
     const jwt = require('jsonwebtoken');
-    const { SECRET_KEY } = require('../../middleware/authMiddleware');
-    const decoded = jwt.verify(authToken, SECRET_KEY);
+    const decoded = jwt.verify(authToken, process.env.JWT_SECRET);
     userId = decoded.id;
   });
 
@@ -188,8 +187,7 @@ describe('Cash API Integration Tests', () => {
 
       const otherToken = otherLoginResponse.body.token;
       const jwt = require('jsonwebtoken');
-      const { SECRET_KEY } = require('../../middleware/authMiddleware');
-      const otherDecoded = jwt.verify(otherToken, SECRET_KEY);
+      const otherDecoded = jwt.verify(otherToken, process.env.JWT_SECRET);
       const otherUserId = otherDecoded.id;
 
       // Add cash entry for other user

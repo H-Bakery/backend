@@ -28,6 +28,7 @@ beforeEach(() => {
 
 // Set test environment variables
 process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'test-jwt-secret-for-unit-tests-minimum-32-characters';
 
 // Global teardown
 afterAll(async () => {

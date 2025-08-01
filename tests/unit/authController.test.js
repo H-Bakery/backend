@@ -3,7 +3,6 @@ const jwt = require("jsonwebtoken");
 const authController = require("../../controllers/authController");
 const { User } = require("../../models");
 const { setupTestDatabase, cleanupTestDatabase } = require("../helpers/testSetup");
-const { SECRET_KEY } = require("../../middleware/authMiddleware");
 
 // Mock the logger to avoid console output during tests
 jest.mock("../../utils/logger", () => ({
@@ -44,11 +43,24 @@ describe("Auth Controller", () => {
       req.body = {
         username: "testuser",
         password: "testpassword123",
+        email: "test@example.com",
+        firstName: "Test",
+        lastName: "User"
       };
 
       await authController.register(req, res);
 
-      expect(res.json).toHaveBeenCalledWith({ message: "User created" });
+      expect(res.json).toHaveBeenCalledWith({ 
+        message: "User created",
+        user: expect.objectContaining({
+          id: expect.any(Number),
+          username: "testuser",
+          email: "test@example.com",
+          firstName: "Test",
+          lastName: "User",
+          role: "user"
+        })
+      });
       
       // Verify user was created in database
       const user = await User.findOne({ where: { username: "testuser" } });
@@ -66,39 +78,51 @@ describe("Auth Controller", () => {
       await User.create({
         username: "existinguser",
         password: await bcrypt.hash("password123", 10),
+        email: "existing@example.com",
+        firstName: "Existing",
+        lastName: "User"
       });
 
       req.body = {
         username: "existinguser",
         password: "newpassword123",
+        email: "new@example.com",
+        firstName: "New",
+        lastName: "User"
       };
 
       await authController.register(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: "User exists" });
+      expect(res.json).toHaveBeenCalledWith({ error: "Username or email already exists" });
     });
 
     it("should handle missing username", async () => {
       req.body = {
         password: "testpassword123",
+        email: "test@example.com",
+        firstName: "Test",
+        lastName: "User"
       };
 
       await authController.register(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ error: "Server error" });
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: "All fields are required" });
     });
 
     it("should handle missing password", async () => {
       req.body = {
         username: "testuser",
+        email: "test@example.com",
+        firstName: "Test",
+        lastName: "User"
       };
 
       await authController.register(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ error: "Server error" });
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: "All fields are required" });
     });
 
     it("should handle empty request body", async () => {
@@ -106,8 +130,8 @@ describe("Auth Controller", () => {
 
       await authController.register(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ error: "Server error" });
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: "All fields are required" });
     });
   });
 
@@ -117,6 +141,9 @@ describe("Auth Controller", () => {
       await User.create({
         username: "loginuser",
         password: await bcrypt.hash("correctpassword", 10),
+        email: "login@example.com",
+        firstName: "Login",
+        lastName: "User"
       });
     });
 
@@ -131,13 +158,20 @@ describe("Auth Controller", () => {
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           token: expect.any(String),
+          user: expect.objectContaining({
+            id: expect.any(Number),
+            username: "loginuser",
+            email: "login@example.com",
+            firstName: "Login",
+            lastName: "User"
+          })
         })
       );
 
       // Verify the token is valid
       const call = res.json.mock.calls[0][0];
       const token = call.token;
-      const decoded = jwt.verify(token, SECRET_KEY);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       expect(decoded.id).toBeTruthy();
     });
 
@@ -201,6 +235,9 @@ describe("Auth Controller", () => {
       await User.create({
         username: "anotheruser",
         password: await bcrypt.hash("password123", 10),
+        email: "another@example.com",
+        firstName: "Another",
+        lastName: "User"
       });
 
       // Login as first user
@@ -219,8 +256,8 @@ describe("Auth Controller", () => {
       expect(firstToken).not.toBe(secondToken);
 
       // Verify both tokens decode to different user IDs
-      const firstDecoded = jwt.verify(firstToken, SECRET_KEY);
-      const secondDecoded = jwt.verify(secondToken, SECRET_KEY);
+      const firstDecoded = jwt.verify(firstToken, process.env.JWT_SECRET);
+      const secondDecoded = jwt.verify(secondToken, process.env.JWT_SECRET);
       expect(firstDecoded.id).not.toBe(secondDecoded.id);
     });
   });
@@ -230,6 +267,9 @@ describe("Auth Controller", () => {
       req.body = {
         username: "securitytest",
         password: "testpassword123",
+        email: "security@example.com",
+        firstName: "Security",
+        lastName: "Test"
       };
 
       await authController.register(req, res);
@@ -246,11 +286,26 @@ describe("Auth Controller", () => {
       const password = "samepassword123";
 
       // Register first user
-      req.body = { username: "user1", password };
+      req.body = { 
+        username: "user1", 
+        password,
+        email: "user1@example.com",
+        firstName: "User",
+        lastName: "One"
+      };
       await authController.register(req, res);
 
+      // Reset response mock
+      res.json.mockClear();
+
       // Register second user with same password
-      req.body = { username: "user2", password };
+      req.body = { 
+        username: "user2", 
+        password,
+        email: "user2@example.com",
+        firstName: "User",
+        lastName: "Two"
+      };
       await authController.register(req, res);
 
       const user1 = await User.findOne({ where: { username: "user1" } });
@@ -264,29 +319,32 @@ describe("Auth Controller", () => {
     beforeEach(async () => {
       await User.create({
         username: "tokenuser",
-        password: await bcrypt.hash("password123", 10),
+        password: await bcrypt.hash("tokenpass", 10),
+        email: "token@example.com",
+        firstName: "Token",
+        lastName: "User"
       });
     });
 
     it("should generate valid JWT tokens", async () => {
-      req.body = { username: "tokenuser", password: "password123" };
+      req.body = { username: "tokenuser", password: "tokenpass" };
       await authController.login(req, res);
 
       const token = res.json.mock.calls[0][0].token;
       expect(typeof token).toBe("string");
 
       // Should be able to decode without error
-      const decoded = jwt.verify(token, SECRET_KEY);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       expect(decoded.id).toBeTruthy();
       expect(typeof decoded.id).toBe("number");
     });
 
     it("should include correct user ID in token", async () => {
-      req.body = { username: "tokenuser", password: "password123" };
+      req.body = { username: "tokenuser", password: "tokenpass" };
       await authController.login(req, res);
 
       const token = res.json.mock.calls[0][0].token;
-      const decoded = jwt.verify(token, SECRET_KEY);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
       const user = await User.findOne({ where: { username: "tokenuser" } });
       expect(decoded.id).toBe(user.id);
@@ -329,7 +387,13 @@ describe("Auth Controller", () => {
       const originalHash = bcrypt.hash;
       bcrypt.hash = jest.fn().mockRejectedValue(new Error("Bcrypt error"));
 
-      req.body = { username: "testuser", password: "testpassword" };
+      req.body = { 
+        username: "testuser", 
+        password: "testpassword",
+        email: "test@example.com",
+        firstName: "Test",
+        lastName: "User"
+      };
       await authController.register(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);
