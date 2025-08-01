@@ -22,8 +22,8 @@ dev-debug.log
 # OS specific
 .DS_Store
 
+coverage
+
 # Task files
 # tasks.json
-# tasks/
-
-coverage
+# tasks/ 
