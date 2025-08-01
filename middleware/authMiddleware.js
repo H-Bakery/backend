@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
 const logger = require("../utils/logger");
 const { User } = require("../models");
-const SECRET_KEY = "your_secret_key";
 
 const authenticate = (req, res, next) => {
   logger.info("Authenticating request...");
@@ -22,7 +21,7 @@ const authenticate = (req, res, next) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  jwt.verify(token, SECRET_KEY, async (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
     if (err) {
       logger.error("Authentication failed: Invalid token", err);
       return res.status(401).json({ error: "Invalid token" });
@@ -67,4 +66,4 @@ const requireStaff = (req, res, next) => {
   next();
 };
 
-module.exports = { authenticate, requireAdmin, requireStaff, SECRET_KEY };
+module.exports = { authenticate, requireAdmin, requireStaff };

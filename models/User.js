@@ -46,6 +46,8 @@ module.exports = (sequelize) => {
       },
     },
     {
+      timestamps: true,
+      paranoid: true, // Enable soft deletes
       hooks: {
         beforeCreate: (user) => {
           logger.info(`Creating new user: ${user.username}`);

@@ -30,6 +30,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.FLOAT,
       defaultValue: 0,
     },
+  }, {
+    timestamps: true,
+    paranoid: true, // Enable soft deletes
   });
 
   Order.associate = (models) => {

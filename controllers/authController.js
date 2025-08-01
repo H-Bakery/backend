@@ -2,7 +2,6 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { User } = require("../models");
 const logger = require("../utils/logger");
-const { SECRET_KEY } = require("../middleware/authMiddleware");
 
 // Register new user
 exports.register = async (req, res) => {
@@ -81,7 +80,7 @@ exports.login = async (req, res) => {
     // Update last login timestamp
     await user.update({ lastLogin: new Date() });
     
-    const token = jwt.sign({ id: user.id, role: user.role }, SECRET_KEY);
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET);
     logger.info("Login successful");
     res.json({ 
       token,
